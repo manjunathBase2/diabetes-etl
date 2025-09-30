@@ -1,0 +1,928 @@
+{
+  "datasets": [
+    {
+      "name": "d230b286",
+      "displayName": "1. Executive KPI Cards",
+      "queryLines": [
+        "SELECT 'Total Patients'        AS metric_name, total_patients        AS metric_value FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'Diabetes Cases',        diabetes_cases       FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'Diabetes Percentage',   diabetes_percentage  FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'High Risk Patients',    high_risk_patients   FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'High Risk Percentage',  high_risk_percentage FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'Average Age',           avg_age              FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'Average Risk Score',    avg_risk_score       FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`\r\n",
+        "UNION ALL\r\n",
+        "SELECT 'Data Quality Score',    data_quality_score   FROM `dbw_capstone_etl_2493383074142522`.`default`.`diabetes_executive_summary`;\r\n"
+      ],
+      "catalog": "dbw_capstone_etl_2493383074142522",
+      "schema": "default"
+    },
+    {
+      "name": "f814de3c",
+      "displayName": "2. Diabetes Rate by Age Group",
+      "queryLines": [
+        "SELECT \r\n",
+        "    age_group,\r\n",
+        "    SUM(patient_count) as total_patients,\r\n",
+        "    SUM(diabetes_cases) as diabetes_cases,\r\n",
+        "    ROUND(AVG(diabetes_rate), 1) as diabetes_rate,\r\n",
+        "    ROUND(AVG(avg_risk_score), 3) as avg_risk_score\r\n",
+        "FROM dbw_capstone_etl_2493383074142522.default.diabetes_demographics_summary\r\n",
+        "GROUP BY age_group\r\n",
+        "ORDER BY \r\n",
+        "    CASE age_group\r\n",
+        "        WHEN 'Young (< 30)' THEN 1\r\n",
+        "        WHEN 'Adult (30-39)' THEN 2\r\n",
+        "        WHEN 'Middle Age (40-49)' THEN 3\r\n",
+        "        WHEN 'Mature (50-59)' THEN 4\r\n",
+        "        WHEN 'Senior (60+)' THEN 5\r\n",
+        "    END\r\n"
+      ]
+    },
+    {
+      "name": "ec5df570",
+      "displayName": "3. BMI Category Distribution with Diabetes Prevalence",
+      "queryLines": [
+        "SELECT \r\n",
+        "    bmi_category,\r\n",
+        "    SUM(patient_count) as total_patients,\r\n",
+        "    SUM(diabetes_cases) as diabetes_cases,\r\n",
+        "    ROUND((SUM(diabetes_cases) * 100.0 / SUM(patient_count)), 1) as diabetes_rate,\r\n",
+        "    ROUND((SUM(patient_count) * 100.0 / (SELECT SUM(patient_count) FROM diabetes_catalog.diabetes_schema.diabetes_demographics_summary)), 1) as population_percentage\r\n",
+        "FROM dbw_capstone_etl_2493383074142522.default.diabetes_demographics_summary\r\n",
+        "GROUP BY bmi_category\r\n",
+        "ORDER BY \r\n",
+        "    CASE bmi_category\r\n",
+        "        WHEN 'Underweight' THEN 1\r\n",
+        "        WHEN 'Normal' THEN 2\r\n",
+        "        WHEN 'Overweight' THEN 3\r\n",
+        "        WHEN 'Obese' THEN 4\r\n",
+        "    END\r\n"
+      ]
+    },
+    {
+      "name": "d03e9935",
+      "displayName": "4. Risk Level Analysis Matrix",
+      "queryLines": [
+        "SELECT \r\n",
+        "    risk_level,\r\n",
+        "    glucose_level,\r\n",
+        "    bp_category,\r\n",
+        "    SUM(patient_count) as patients,\r\n",
+        "    ROUND(AVG(diabetes_rate), 1) as avg_diabetes_rate,\r\n",
+        "    ROUND(AVG(avg_risk_score), 3) as avg_risk_score\r\n",
+        "FROM dbw_capstone_etl_2493383074142522.default.diabetes_risk_analysis\r\n",
+        "GROUP BY risk_level, glucose_level, bp_category\r\n",
+        "HAVING SUM(patient_count) > 0\r\n",
+        "ORDER BY \r\n",
+        "    CASE risk_level WHEN 'Low' THEN 1 WHEN 'Medium' THEN 2 WHEN 'High' THEN 3 END,\r\n",
+        "    CASE glucose_level WHEN 'Normal' THEN 1 WHEN 'Prediabetic' THEN 2 WHEN 'Diabetic Range' THEN 3 END\r\n"
+      ]
+    },
+    {
+      "name": "33555536",
+      "displayName": "5. Pregnancy Risk vs Diabetes Outcomes",
+      "queryLines": [
+        "SELECT \r\n",
+        "    SUM(patient_count) as total_patients,\r\n",
+        "    SUM(diabetes_cases) as diabetes_cases,\r\n",
+        "    ROUND(AVG(diabetes_rate), 1) as diabetes_rate,\r\n",
+        "    ROUND(AVG(avg_risk_score), 3) as risk_score\r\n",
+        "FROM dbw_capstone_etl_2493383074142522.default.diabetes_risk_analysis\r\n",
+        "\r\n"
+      ]
+    },
+    {
+      "name": "06e7a8ef",
+      "displayName": "6. Comprehensive Risk Score Distribution",
+      "queryLines": [
+        "WITH risk_distribution AS (\r\n",
+        "  SELECT \r\n",
+        "    CASE \r\n",
+        "      WHEN avg_risk_score < 0.3 THEN '0.0-0.3 (Very Low)'\r\n",
+        "      WHEN avg_risk_score < 0.4 THEN '0.3-0.4 (Low)' \r\n",
+        "      WHEN avg_risk_score < 0.5 THEN '0.4-0.5 (Moderate)'\r\n",
+        "      WHEN avg_risk_score < 0.6 THEN '0.5-0.6 (High)'\r\n",
+        "      ELSE '0.6+ (Very High)'\r\n",
+        "    END as risk_range,\r\n",
+        "    SUM(patient_count) as patient_count,\r\n",
+        "    ROUND(AVG(diabetes_rate), 1) as avg_diabetes_rate\r\n",
+        "  FROM dbw_capstone_etl_2493383074142522.default.diabetes_demographics_summary\r\n",
+        "  GROUP BY \r\n",
+        "    CASE \r\n",
+        "      WHEN avg_risk_score < 0.3 THEN '0.0-0.3 (Very Low)'\r\n",
+        "      WHEN avg_risk_score < 0.4 THEN '0.3-0.4 (Low)' \r\n",
+        "      WHEN avg_risk_score < 0.5 THEN '0.4-0.5 (Moderate)'\r\n",
+        "      WHEN avg_risk_score < 0.6 THEN '0.5-0.6 (High)'\r\n",
+        "      ELSE '0.6+ (Very High)'\r\n",
+        "    END\r\n",
+        ")\r\n",
+        "SELECT \r\n",
+        "  risk_range,\r\n",
+        "  patient_count,\r\n",
+        "  avg_diabetes_rate,\r\n",
+        "  ROUND((patient_count * 100.0 / SUM(patient_count) OVER()), 1) as population_percentage\r\n",
+        "FROM risk_distribution\r\n",
+        "ORDER BY risk_range\r\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "0f0c2c82",
+      "displayName": "Main",
+      "layout": [
+        {
+          "widget": {
+            "name": "67516485",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "d230b286",
+                  "fields": [
+                    {
+                      "name": "metric_name",
+                      "expression": "`metric_name`"
+                    },
+                    {
+                      "name": "metric_value",
+                      "expression": "`metric_value`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "metric_value",
+                  "style": {
+                    "fontSize": 78,
+                    "color": {
+                      "themeColorType": "visualizationColors",
+                      "position": 5
+                    },
+                    "rules": [
+                      {
+                        "condition": {
+                          "operator": ">="
+                        },
+                        "color": "#00A972"
+                      }
+                    ]
+                  },
+                  "displayName": "metric_value"
+                },
+                "target": {
+                  "fieldName": "metric_name",
+                  "displayName": "metric_name"
+                }
+              },
+              "frame": {
+                "showTitle": false,
+                "title": "TOTAL PATIENTS"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 2,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "c90aed42",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "d230b286",
+                  "fields": [
+                    {
+                      "name": "metric_name",
+                      "expression": "`metric_name`"
+                    },
+                    {
+                      "name": "metric_value",
+                      "expression": "`metric_value`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "metric_value",
+                  "rowNumber": 6,
+                  "displayName": "metric_value"
+                },
+                "target": {
+                  "fieldName": "metric_name",
+                  "rowNumber": 6,
+                  "displayName": "metric_name"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "91a6ba12",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "d230b286",
+                  "fields": [
+                    {
+                      "name": "metric_name",
+                      "expression": "`metric_name`"
+                    },
+                    {
+                      "name": "metric_value",
+                      "expression": "`metric_value`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "metric_value",
+                  "rowNumber": 2,
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operator": ">="
+                        },
+                        "color": "#00A972"
+                      }
+                    ]
+                  },
+                  "displayName": "metric_value"
+                },
+                "target": {
+                  "fieldName": "metric_name",
+                  "displayName": "metric_name"
+                }
+              },
+              "frame": {
+                "showDescription": false,
+                "showTitle": false,
+                "title": "DIABETES CASES"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 0,
+            "width": 2,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "e9bec7b3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "d230b286",
+                  "fields": [
+                    {
+                      "name": "metric_name",
+                      "expression": "`metric_name`"
+                    },
+                    {
+                      "name": "metric_value",
+                      "expression": "`metric_value`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "metric_value",
+                  "rowNumber": 4,
+                  "style": {
+                    "color": "#F30101",
+                    "rules": [
+                      {
+                        "condition": {
+                          "operator": ">="
+                        },
+                        "color": "#00A972"
+                      },
+                      {
+                        "condition": {
+                          "operator": ">="
+                        },
+                        "color": "#00A972"
+                      }
+                    ]
+                  },
+                  "displayName": "metric_value"
+                },
+                "target": {
+                  "fieldName": "metric_name",
+                  "rowNumber": 4,
+                  "style": {
+                    "color": {
+                      "themeColorType": "visualizationColors",
+                      "position": 4
+                    }
+                  },
+                  "displayName": "metric_name"
+                }
+              },
+              "frame": {
+                "showTitle": false
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 4,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "ca3346df",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "f814de3c",
+                  "fields": [
+                    {
+                      "name": "age_group",
+                      "expression": "`age_group`"
+                    },
+                    {
+                      "name": "diabetes_rate",
+                      "expression": "`diabetes_rate`"
+                    },
+                    {
+                      "name": "avg_risk_score",
+                      "expression": "`avg_risk_score`"
+                    },
+                    {
+                      "name": "diabetes_cases",
+                      "expression": "`diabetes_cases`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "age_group",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Young (< 30)",
+                        "Adult (30-39)",
+                        "Middle Age (40-49)",
+                        "Mature (50-59)",
+                        "Senior (60+)"
+                      ]
+                    }
+                  },
+                  "axis": {
+                    "hideLabels": false
+                  },
+                  "displayName": "Age Group"
+                },
+                "y": {
+                  "fieldName": "diabetes_rate",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "hideTitle": false
+                  },
+                  "displayName": "Diabetes Rate"
+                },
+                "color": {
+                  "fieldName": "age_group",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Adult (30-39)",
+                        "Mature (50-59)",
+                        "Middle Age (40-49)",
+                        "Senior (60+)",
+                        "Young (< 30)"
+                      ]
+                    }
+                  },
+                  "legend": {
+                    "hide": true,
+                    "hideTitle": true
+                  },
+                  "displayName": "Age Group"
+                },
+                "label": {
+                  "show": true
+                },
+                "extra": [
+                  {
+                    "fieldName": "diabetes_rate",
+                    "displayName": "Diabetes Rate"
+                  },
+                  {
+                    "fieldName": "avg_risk_score",
+                    "displayName": "Avg Risk Score"
+                  },
+                  {
+                    "fieldName": "diabetes_cases",
+                    "displayName": "Diabetes Cases"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": false,
+                "title": "Diabetes Rate ",
+                "showDescription": false
+              },
+              "mark": {
+                "colors": [
+                  "#59BCDA",
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 4,
+            "height": 9
+          }
+        },
+        {
+          "widget": {
+            "name": "918eedc2",
+            "multilineTextboxSpec": {
+              "lines": [
+                "#                                    **Diabetes Rate across Age Groups**"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "7632bce7",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ec5df570",
+                  "fields": [
+                    {
+                      "name": "bmi_category",
+                      "expression": "`bmi_category`"
+                    },
+                    {
+                      "name": "total_patients",
+                      "expression": "`total_patients`"
+                    },
+                    {
+                      "name": "diabetes_rate",
+                      "expression": "`diabetes_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "combo",
+              "encodings": {
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "total_patients",
+                        "displayName": "Total Patients"
+                      }
+                    ]
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "diabetes_rate",
+                        "displayName": "Diabetes Rate"
+                      }
+                    ]
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "x": {
+                  "fieldName": "bmi_category",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Underweight",
+                        "Normal",
+                        "Obese",
+                        "Overweight"
+                      ]
+                    }
+                  },
+                  "displayName": "BMI Category"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Patient Distribution by BMI Category"
+              },
+              "mark": {
+                "colors": [
+                  "#73C3DC",
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 7,
+            "width": 2,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "d064d3d2",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "d03e9935",
+                  "fields": [
+                    {
+                      "name": "risk_level",
+                      "expression": "`risk_level`"
+                    },
+                    {
+                      "name": "glucose_level",
+                      "expression": "`glucose_level`"
+                    },
+                    {
+                      "name": "bp_category",
+                      "expression": "`bp_category`"
+                    },
+                    {
+                      "name": "avg_diabetes_rate",
+                      "expression": "`avg_diabetes_rate`"
+                    }
+                  ],
+                  "cubeGroupingSets": {
+                    "sets": [
+                      {
+                        "fieldNames": [
+                          "risk_level",
+                          "glucose_level"
+                        ]
+                      },
+                      {
+                        "fieldNames": [
+                          "bp_category"
+                        ]
+                      }
+                    ]
+                  },
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "ASC",
+                      "expression": "`risk_level`"
+                    },
+                    {
+                      "direction": "ASC",
+                      "expression": "`glucose_level`"
+                    },
+                    {
+                      "direction": "ASC",
+                      "expression": "`bp_category`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pivot",
+              "encodings": {
+                "rows": [
+                  {
+                    "fieldName": "risk_level",
+                    "scale": {
+                      "type": "categorical",
+                      "sort": {
+                        "by": "custom-order",
+                        "orderedValues": [
+                          "Low",
+                          "Medium",
+                          "High"
+                        ]
+                      }
+                    },
+                    "displayName": "Risk Level"
+                  },
+                  {
+                    "fieldName": "glucose_level",
+                    "scale": {
+                      "type": "categorical",
+                      "sort": {
+                        "by": "custom-order",
+                        "orderedValues": [
+                          "Normal",
+                          "Prediabetic",
+                          "Diabetic Range"
+                        ]
+                      }
+                    },
+                    "displayName": "Glucose Level"
+                  }
+                ],
+                "columns": [
+                  {
+                    "fieldName": "bp_category",
+                    "scale": {
+                      "type": "categorical",
+                      "sort": {
+                        "by": "custom-order",
+                        "orderedValues": [
+                          "Normal",
+                          "High Normal",
+                          "Mild Hypertension",
+                          "Hypertension"
+                        ]
+                      }
+                    },
+                    "displayName": "BP Category"
+                  }
+                ],
+                "cell": {
+                  "type": "multi-cell",
+                  "fields": [
+                    {
+                      "fieldName": "avg_diabetes_rate",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-plain",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "style": {
+                        "type": "basic",
+                        "rules": [
+                          {
+                            "condition": {
+                              "operator": ">=",
+                              "operand": {
+                                "type": "data-value",
+                                "value": "50"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "displayName": "Average Diabetes Rate"
+                    }
+                  ],
+                  "width": 160
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Diabetes Rate by Risk Factors (%)"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "32010501",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "06e7a8ef",
+                  "fields": [
+                    {
+                      "name": "patient_count",
+                      "expression": "`patient_count`"
+                    },
+                    {
+                      "name": "risk_range",
+                      "expression": "`risk_range`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`patient_count` IN (`patient_count`) OR TRUE"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "patient_count",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Patient Count"
+                },
+                "color": {
+                  "fieldName": "risk_range",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "0.3-0.4 (Low)",
+                        "0.4-0.5 (Moderate)",
+                        "0.5-0.6 (High)"
+                      ]
+                    }
+                  },
+                  "legend": {
+                    "hide": false,
+                    "hideTitle": true
+                  },
+                  "displayName": "Risk Range"
+                },
+                "extra": [
+                  {
+                    "fieldName": "risk_range",
+                    "displayName": "risk_range"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "RISK RANGE"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 2,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    }
+  }
+}
