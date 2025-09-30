@@ -10,7 +10,7 @@ This project implements a complete diabetes data analysis ETL workflow using Azu
 
 ```
 diabetes-etl/
-├── data/                                    # Sample diabetes datasets (6 CSV files)
+├── data/                                    # Diabetes datasets (6 CSV files)
 │   ├── diabetes_part_1.csv
 │   ├── diabetes_part_2.csv
 │   ├── diabetes_part_3.csv
@@ -53,10 +53,10 @@ diabetes-etl/
 
 1. **Upload Pipeline Code to Databricks:**
 
-   ```bash
-   # Navigate to your Databricks workspace
-   # Go to Workspace → Users → [your-user] → Import
-   ```
+
+   - Navigate to your Databricks workspace
+   - Go to Workspace → Users → [your-user] → Import
+
 
 2. **Import the main pipeline file:**
    - Upload **[src/diabetes_etl_pipeline.py](src/diabetes_etl_pipeline.py)** to your Databricks workspace
