@@ -4,7 +4,10 @@ This project implements a complete diabetes data analysis ETL workflow using Azu
 
 ## Tech Stack
 
-![Tech Stack](assets/tech_stack.png)
+<img width="1950" height="582" alt="tech_stack" src="https://github.com/user-attachments/assets/e0e4fa80-a788-48bb-88a9-e182b64eb851" />
+
+
+
 
 ## Project Structure
 
@@ -29,11 +32,12 @@ diabetes-etl/
 
 ## Features
 
-![Features Overview](assets/features.png)
+<img width="1782" height="962" alt="features" src="https://github.com/user-attachments/assets/fe0ec5bc-22a8-4140-852f-774ce1d0125c" />
+
 
 ## Dataset
 
-![Dataset Overview](assets/dataset.png)
+<img width="1852" height="958" alt="dataset" src="https://github.com/user-attachments/assets/a96c0930-9a59-4b9f-8896-63065de1bc03" />
 
 
 ## Setup Instructions
